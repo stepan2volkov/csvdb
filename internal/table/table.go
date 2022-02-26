@@ -1,11 +1,15 @@
 package table
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/jedib0t/go-pretty/v6/table"
+)
 
 type FieldType int
 
 const (
-	FieldTypeInt    FieldType = iota
+	FieldTypeNumber FieldType = iota
 	FieldTypeString FieldType = iota
 )
 
@@ -41,15 +45,20 @@ type Table struct {
 }
 
 func (t Table) GetSubTable(rowIndexes []int) Table {
-	fields := make([]Field, 0, len(t.Fields))
+	fields := make([]Field, len(t.Fields))
 	copy(fields, t.Fields)
 
-	rows := make([]Column, 0, len(rowIndexes))
-	for _, i := range rowIndexes {
-		rows = append(rows, t.Columns[i])
+	cols := make([]Column, 0, len(t.Columns))
+
+	for columnIndex := range t.Fields {
+		col := make(Column, 0, len(rowIndexes))
+		for _, rowIndex := range rowIndexes {
+			col = append(col, t.Columns[columnIndex][rowIndex])
+		}
+		cols = append(cols, col)
 	}
 
-	return Table{Fields: fields, Columns: rows}
+	return NewTable(fields, cols)
 }
 
 func (t Table) GetField(fieldName string) (Field, error) {
@@ -66,4 +75,31 @@ func (t Table) GetFieldIndex(fieldName string) (int, error) {
 		return 0, fmt.Errorf("field '%s' not found", fieldName)
 	}
 	return i, nil
+}
+
+func (t Table) String() string {
+	writer := table.NewWriter()
+	writer.SetStyle(table.StyleLight)
+
+	header := table.Row{}
+	for _, field := range t.Fields {
+		header = append(header, field.Name)
+	}
+	writer.AppendHeader(header)
+
+	rowCount := len(t.Columns[0])
+	rows := make([]table.Row, 0, rowCount)
+
+	for rowIndex := 0; rowIndex < rowCount; rowIndex++ {
+		row := table.Row{}
+
+		for columnIndex := range t.Fields {
+			row = append(row, t.Columns[columnIndex][rowIndex])
+		}
+		rows = append(rows, row)
+	}
+
+	writer.AppendRows(rows)
+
+	return writer.Render()
 }

@@ -2,9 +2,14 @@ package table
 
 import (
 	"fmt"
+	"strconv"
 )
 
 var _ Value = StringValue{}
+
+func NewStringValue(val string) StringValue {
+	return StringValue{value: val}
+}
 
 type StringValue struct {
 	value string
@@ -31,6 +36,14 @@ func (v StringValue) Compare(val interface{}, op CompareOperationType) (bool, er
 }
 
 var _ Value = NumberValue{}
+
+func NewNumberValue(val string) (NumberValue, error) {
+	num, err := strconv.ParseFloat(val, 64)
+	if err != nil {
+		return NumberValue{}, err
+	}
+	return NumberValue{value: num}, nil
+}
 
 type NumberValue struct {
 	value float64
