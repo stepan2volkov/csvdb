@@ -1,4 +1,5 @@
 [![codecov](https://codecov.io/gh/stepan2volkov/csvdb/branch/main/graph/badge.svg?token=CP0CR6QKOE)](https://codecov.io/gh/stepan2volkov/csvdb)
+[![CI](https://github.com/stepan2volkov/csvdb/workflows/CI/badge.svg)](https://github.com/stepan2volkov/csvdb/actions?query=workflow%3CI)
 ------
 # CSV DB
 
