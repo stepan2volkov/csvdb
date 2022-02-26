@@ -1,6 +1,8 @@
-[![codecov](https://codecov.io/gh/stepan2volkov/csvdb/branch/main/graph/badge.svg?token=CP0CR6QKOE)](https://codecov.io/gh/stepan2volkov/csvdb)
-![CI](https://github.com/stepan2volkov/csvdb/actions/workflows/ci.yaml/badge.svg)
 [![Go version](https://img.shields.io/github/go-mod/go-version/stepan2volkov/csvdb.svg)](https://github.com/stepan2volkov/csvdb/blob/main/go.mod)
+![CI](https://github.com/stepan2volkov/csvdb/actions/workflows/ci.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/stepan2volkov/csvdb/branch/main/graph/badge.svg?token=CP0CR6QKOE)](https://codecov.io/gh/stepan2volkov/csvdb)
+
+
 # CSV DB
 
 ## Описание
