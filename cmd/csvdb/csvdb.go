@@ -110,7 +110,6 @@ func (h *TableHolder) Query(tableName string, query string) (string, error) {
 func main() {
 	var tableName string
 	th := NewTableHolder()
-	// th.Load("./grades.csv", "grades.yaml")
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
@@ -154,8 +153,7 @@ func main() {
 				fmt.Printf("\t%v\n", err)
 			}
 		case strings.HasPrefix(in, `\use`):
-			newTableName := strings.TrimPrefix(in, `\use`)
-			newTableName = strings.TrimSpace(newTableName)
+			newTableName := strings.TrimSpace(strings.TrimPrefix(in, `\use`))
 			if newTableName == "" {
 				fmt.Println("\tThe right syntax: \n\t\\use <tablename>")
 				continue

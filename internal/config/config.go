@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/stepan2volkov/csvdb/internal/table"
+
 	"gopkg.in/yaml.v3"
 )
 
