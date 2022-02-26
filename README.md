@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/stepan2volkov/csvdb/branch/main/graph/badge.svg?token=CP0CR6QKOE)](https://codecov.io/gh/stepan2volkov/csvdb)
+------
 # CSV DB
 
 ## Описание
