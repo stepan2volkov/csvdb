@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -14,84 +13,6 @@ var (
 	regexpID      = regexp.MustCompile(`[a-zA-Z][a-zA-Z0-9_]*`)
 	regexpKeyword = regexp.MustCompile(`select|from|where`)
 )
-
-type TokenType int
-
-const (
-	TokenTypeUnknown            TokenType = iota
-	TokenTypeKeyword            TokenType = iota
-	TokenTypeID                 TokenType = iota
-	TokenTypeString             TokenType = iota
-	TokenTypeNumber             TokenType = iota
-	TokenTypeOpMore             TokenType = iota
-	TokenTypeOpLess             TokenType = iota
-	TokenTypeOpEqual            TokenType = iota
-	TokenTypeOpAnd              TokenType = iota
-	TokenTypeOpOr               TokenType = iota
-	TokenTypeOpenCurlyBracket   TokenType = iota
-	TokenTypeClosedCurlyBracket TokenType = iota
-)
-
-func NewToken(value interface{}, tokenType TokenType) Token {
-	priority := 0
-	switch tokenType {
-	case TokenTypeOpenCurlyBracket:
-		priority = 4
-	case TokenTypeClosedCurlyBracket:
-		priority = 4
-	case TokenTypeOpMore:
-		priority = 3
-	case TokenTypeOpLess:
-		priority = 3
-	case TokenTypeOpEqual:
-		priority = 3
-	case TokenTypeOpAnd:
-		priority = 2
-	case TokenTypeOpOr:
-		priority = 1
-	}
-
-	return Token{
-		tokenType: tokenType,
-		priority:  priority,
-		value:     value,
-	}
-}
-func ParseTokenType(value string) Token {
-	if value == "and" {
-		return NewToken(value, TokenTypeOpAnd)
-	}
-	if value == "or" {
-		return NewToken(value, TokenTypeOpOr)
-	}
-	if matched := regexpNumber.MatchString(value); matched {
-		// можно игнорировать ошибку, поскольку значение проверено регулярным выражением
-		val, _ := strconv.ParseFloat(value, 64)
-		return NewToken(val, TokenTypeNumber)
-	}
-	if matched := regexpKeyword.MatchString(value); matched {
-		return NewToken(value, TokenTypeKeyword)
-	}
-	if matched := regexpID.MatchString(value); matched {
-		return NewToken(value, TokenTypeID)
-	}
-
-	return NewToken(value, TokenTypeUnknown)
-}
-
-type Token struct {
-	tokenType TokenType
-	priority  int
-	value     interface{}
-}
-
-func (t *Token) Value() interface{} {
-	return t.value
-}
-
-func (t *Token) Type() TokenType {
-	return t.tokenType
-}
 
 func NewTokenizer() *Tokenizer {
 	return &Tokenizer{
@@ -153,14 +74,19 @@ func (t *Tokenizer) GetTokens() []Token {
 	return t.tokens
 }
 
-func Parse(reader io.RuneReader) ([]Token, error) {
-	tokenizer := NewTokenizer()
+func NewParser() *Parser {
+	return &Parser{
+		buf:       strings.Builder{},
+		tokenizer: NewTokenizer(),
+	}
+}
 
-	var hasOpenedQuotationMark bool
-	var hasPrevRuneEscape bool
+type Parser struct {
+	buf       strings.Builder
+	tokenizer *Tokenizer
+}
 
-	lexeme := strings.Builder{}
-
+func (p *Parser) Parse(reader io.RuneReader) ([]Token, error) {
 	for {
 		r, _, err := reader.ReadRune()
 		if err == io.EOF {
@@ -172,97 +98,112 @@ func Parse(reader io.RuneReader) ([]Token, error) {
 
 		// Конец выражения
 		if r == ';' {
-			if lexeme.Len() > 0 {
-				if err := tokenizer.AddToTokens(ParseTokenType(lexeme.String())); err != nil {
-					return nil, err
-				}
-				lexeme.Reset()
+			if err = p.flushBuffer(); err != nil {
+				return nil, err
 			}
-			return tokenizer.GetTokens(), nil
+			return p.tokenizer.GetTokens(), nil
 		}
 
-		// ==== Обработка строк
-
-		// Строка закончилась
-		if hasOpenedQuotationMark && (r == '\'' && !hasPrevRuneEscape) {
-			hasOpenedQuotationMark = false
-			if lexeme.Len() > 0 {
-				if err := tokenizer.AddToTokens(NewToken(lexeme.String(), TokenTypeString)); err != nil {
-					return nil, err
-				}
-				lexeme.Reset()
-			}
-			continue
-		}
-		// Строка продолжается
-		if hasOpenedQuotationMark {
-			if r == '\\' && !hasPrevRuneEscape {
-				hasPrevRuneEscape = true
-				continue
-			}
-			hasPrevRuneEscape = false
-			lexeme.WriteRune(r)
-			continue
-		}
-		// Строка началась
 		if r == '\'' {
-			hasOpenedQuotationMark = true
+			if err = p.extractString(reader); err != nil {
+				return nil, err
+			}
 			continue
 		}
 
 		// ==== Обработка знаков сравнения
 		if r == '=' || r == '>' || r == '<' {
-			tokenType := TokenTypeOpEqual
-			switch r {
-			case '>':
-				tokenType = TokenTypeOpMore
-			case '<':
-				tokenType = TokenTypeOpLess
-			}
-			if lexeme.Len() > 0 {
-				if err := tokenizer.AddToTokens(ParseTokenType(lexeme.String())); err != nil {
-					return nil, err
-				}
-				lexeme.Reset()
-			}
-			lexeme.WriteRune(r)
-			if err := tokenizer.AddToTokens(NewToken(lexeme.String(), tokenType)); err != nil {
+			if err = p.handleCompareSign(r); err != nil {
 				return nil, err
 			}
-			lexeme.Reset()
 			continue
 		}
 
 		// ==== Обработка скобок
 		if r == '(' || r == ')' {
-			if lexeme.Len() > 0 {
-				if err := tokenizer.AddToTokens(ParseTokenType(lexeme.String())); err != nil {
-					return nil, err
-				}
-				lexeme.Reset()
+			if err = p.flushBuffer(); err != nil {
+				return nil, err
 			}
 			tokenType := TokenTypeOpenCurlyBracket
 			if r == ')' {
 				tokenType = TokenTypeClosedCurlyBracket
 			}
-			lexeme.WriteRune(r)
-			if err := tokenizer.AddToTokens(NewToken(lexeme.String(), tokenType)); err != nil {
+			p.buf.WriteRune(r)
+			if err = p.tokenizer.AddToTokens(NewToken(p.buf.String(), tokenType)); err != nil {
 				return nil, err
 			}
-			lexeme.Reset()
+			p.buf.Reset()
 			continue
 		}
 
 		// ==== Обработка символов ключевых слов, наименования полей и таблиц
 		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '.' || r == '_' {
-			lexeme.WriteRune(unicode.ToLower(r))
+			p.buf.WriteRune(unicode.ToLower(r))
 			continue
 		}
-		if lexeme.Len() > 0 {
-			if err := tokenizer.AddToTokens(ParseTokenType(lexeme.String())); err != nil {
-				return nil, err
-			}
-			lexeme.Reset()
+		if err = p.flushBuffer(); err != nil {
+			return nil, err
 		}
 	}
+}
+
+func (p *Parser) flushBuffer() error {
+	if p.buf.Len() > 0 {
+		if err := p.tokenizer.AddToTokens(ParseTokenType(p.buf.String())); err != nil {
+			return err
+		}
+		p.buf.Reset()
+	}
+	return nil
+}
+
+func (p *Parser) extractString(reader io.RuneReader) error {
+	var hasPrevRuneEscape bool
+
+	for {
+		r, _, err := reader.ReadRune()
+		if err == io.EOF {
+			return fmt.Errorf("string value should be closed")
+		}
+		if err != nil {
+			return fmt.Errorf("unexpected error: %w", err)
+		}
+
+		// Строка закончилась
+		if r == '\'' && !hasPrevRuneEscape {
+			if p.buf.Len() > 0 {
+				if err := p.tokenizer.AddToTokens(NewToken(p.buf.String(), TokenTypeString)); err != nil {
+					return err
+				}
+				p.buf.Reset()
+			}
+			return nil
+		}
+		if r == '\\' && !hasPrevRuneEscape {
+			hasPrevRuneEscape = true
+			continue
+		}
+		hasPrevRuneEscape = false
+		p.buf.WriteRune(r)
+	}
+
+}
+
+func (p *Parser) handleCompareSign(r rune) error {
+	tokenType := TokenTypeOpEqual
+	switch r {
+	case '>':
+		tokenType = TokenTypeOpMore
+	case '<':
+		tokenType = TokenTypeOpLess
+	}
+	if err := p.flushBuffer(); err != nil {
+		return err
+	}
+	p.buf.WriteRune(r)
+	if err := p.tokenizer.AddToTokens(NewToken(p.buf.String(), tokenType)); err != nil {
+		return err
+	}
+	p.buf.Reset()
+	return nil
 }
