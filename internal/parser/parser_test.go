@@ -117,7 +117,6 @@ func TestParse(t *testing.T) {
 			name:   "curly brackets",
 			reader: strings.NewReader(`WHERE fullname ='Mike Smith' AND (age > 18 OR salary > 15000.99);`),
 			want: []Token{
-
 				{
 					tokenType: TokenTypeKeyword,
 					value:     "where",

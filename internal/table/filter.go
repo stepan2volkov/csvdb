@@ -26,19 +26,13 @@ const (
 	LogicalOperationTypeDummy LogicalOperationType = "dummy"
 )
 
-type LogicalFilter struct {
-	Op    LogicalOperationType
-	Left  *LogicalFilter
-	Right *LogicalFilter
-}
-
-type LogicalFilterV2 interface {
+type LogicalFilter interface {
 	Filtrate(ctx context.Context, t Table) ([]int, error)
 }
 
 type AndFilter struct {
-	Left  LogicalFilterV2
-	Right LogicalFilterV2
+	Left  LogicalFilter
+	Right LogicalFilter
 }
 
 func (f AndFilter) Filtrate(ctx context.Context, t Table) ([]int, error) {
@@ -55,8 +49,8 @@ func (f AndFilter) Filtrate(ctx context.Context, t Table) ([]int, error) {
 }
 
 type OrFilter struct {
-	Left  LogicalFilterV2
-	Right LogicalFilterV2
+	Left  LogicalFilter
+	Right LogicalFilter
 }
 
 func (f OrFilter) Filtrate(ctx context.Context, t Table) ([]int, error) {
@@ -81,11 +75,11 @@ func (f OrFilter) Filtrate(ctx context.Context, t Table) ([]int, error) {
 }
 
 type DummyFilter struct {
-	filter CompareFilter
+	Filter CompareFilter
 }
 
 func (f DummyFilter) Filtrate(ctx context.Context, t Table) ([]int, error) {
-	fieldIndex, err := t.GetFieldIndex(f.filter.FieldName)
+	fieldIndex, err := t.GetFieldIndex(f.Filter.FieldName)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +88,7 @@ func (f DummyFilter) Filtrate(ctx context.Context, t Table) ([]int, error) {
 
 	var ret []int
 	for i, val := range column {
-		accept, err := val.Compare(f.filter.Val, f.filter.Op)
+		accept, err := val.Compare(f.Filter.Val, f.Filter.Op)
 		if err != nil {
 			return nil, err
 		}
