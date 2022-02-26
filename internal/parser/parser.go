@@ -27,9 +27,6 @@ type Tokenizer struct {
 }
 
 func (t *Tokenizer) AddToTokens(token Token) error {
-	if token.Type() == TokenTypeOpenCurlyBracket {
-		fmt.Println("found")
-	}
 	switch token.Type() {
 	case TokenTypeKeyword, TokenTypeID, TokenTypeString, TokenTypeNumber, TokenTypeUnknown:
 		t.tokens = append(t.tokens, token)
