@@ -1,14 +1,38 @@
-package tableloader
+package loader
 
 import (
 	"encoding/csv"
 	"fmt"
 	"os"
 
-	"github.com/stepan2volkov/csvdb/internal/table"
+	"github.com/stepan2volkov/csvdb/internal/app/table"
+	"github.com/stepan2volkov/csvdb/internal/app/table/value"
 )
 
-func Load(path string, sep rune, lazyQuotes bool, fields []table.Field) (table.Table, error) {
+func LoadFromCSV(csvPath string, configPath string) (table.Table, error) {
+	file, err := os.Open(configPath)
+	if err != nil {
+		return table.Table{}, err
+	}
+	tableConfig, err := loadConfig(file)
+	if err != nil {
+		return table.Table{}, err
+	}
+
+	fields, err := tableConfig.getFields()
+	if err != nil {
+		return table.Table{}, err
+	}
+
+	t, err := load(tableConfig.Name, csvPath, tableConfig.getSep(), tableConfig.LazyQuotes, fields)
+	if err != nil {
+		return table.Table{}, err
+	}
+
+	return t, nil
+}
+
+func load(tableName string, path string, sep rune, lazyQuotes bool, fields []table.Field) (table.Table, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return table.Table{}, err
@@ -41,17 +65,20 @@ func Load(path string, sep rune, lazyQuotes bool, fields []table.Field) (table.T
 		if !found {
 			return table.Table{}, fmt.Errorf("column '%s' not found in file", field.Name)
 		}
-		col := make(table.Column, 0, len(records))
+
+		col := table.Column{Field: field}
+
 		for rowIndex := 0; rowIndex < len(records); rowIndex++ {
 			switch field.Type {
 			case table.FieldTypeNumber:
-				val, err := table.NewNumberValue(records[rowIndex][columnIndex])
+				val, err := value.NewNumberValue(records[rowIndex][columnIndex])
 				if err != nil {
 					return table.Table{}, fmt.Errorf("error when parsing column %s, line %d: %w", field.Name, rowIndex+2, err)
 				}
-				col = append(col, val)
+				col.Values = append(col.Values, val)
 			case table.FieldTypeString:
-				col = append(col, table.NewStringValue(records[rowIndex][columnIndex]))
+				val := value.NewStringValue(records[rowIndex][columnIndex])
+				col.Values = append(col.Values, val)
 			default:
 				return table.Table{}, fmt.Errorf("unknown field type for %s", field.Name)
 			}
@@ -59,5 +86,5 @@ func Load(path string, sep rune, lazyQuotes bool, fields []table.Field) (table.T
 		cols = append(cols, col)
 	}
 
-	return table.NewTable(fields, cols), nil
+	return table.NewTable(tableName, cols), nil
 }

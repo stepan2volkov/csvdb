@@ -1,4 +1,4 @@
-package parser
+package scanner
 
 import (
 	"io"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParse(t *testing.T) {
+func TestScan(t *testing.T) {
 	tests := []struct {
 		name    string
 		reader  io.RuneReader
@@ -21,7 +21,7 @@ func TestParse(t *testing.T) {
 			want: []Token{
 				{
 					tokenType: TokenTypeKeyword,
-					value:     "where",
+					value:     KeywordWhere,
 					priority:  0,
 				},
 				{
@@ -47,7 +47,7 @@ func TestParse(t *testing.T) {
 			want: []Token{
 				{
 					tokenType: TokenTypeKeyword,
-					value:     "where",
+					value:     KeywordWhere,
 					priority:  0,
 				},
 				{
@@ -73,7 +73,7 @@ func TestParse(t *testing.T) {
 			want: []Token{
 				{
 					tokenType: TokenTypeKeyword,
-					value:     "where",
+					value:     KeywordWhere,
 					priority:  0,
 				},
 				{
@@ -119,7 +119,7 @@ func TestParse(t *testing.T) {
 			want: []Token{
 				{
 					tokenType: TokenTypeKeyword,
-					value:     "where",
+					value:     KeywordWhere,
 					priority:  0,
 				},
 				{
@@ -186,7 +186,7 @@ func TestParse(t *testing.T) {
 
 				{
 					tokenType: TokenTypeKeyword,
-					value:     "where",
+					value:     KeywordWhere,
 					priority:  0,
 				},
 				{
@@ -246,12 +246,115 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:   "select stmt",
+			reader: strings.NewReader("SELECT col_1, col_2 FROM table WHERE col_1 > 2;"),
+			want: []Token{
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordSelect,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "col_1",
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "col_2",
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordFrom,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "table",
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordWhere,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "col_1",
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeNumber,
+					value:     2.0,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeOpMore,
+					value:     ">",
+					priority:  3,
+				},
+			},
+		},
+		{
+			name:   "select all",
+			reader: strings.NewReader("SELECT * FROM table;"),
+			want: []Token{
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordSelect,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "*",
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordFrom,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "table",
+					priority:  0,
+				},
+			},
+		},
+		{
+			name:   "id double quotes ",
+			reader: strings.NewReader(`SELECT "Col Name" FROM "tableName";`),
+			want: []Token{
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordSelect,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "Col Name",
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeKeyword,
+					value:     KeywordFrom,
+					priority:  0,
+				},
+				{
+					tokenType: TokenTypeID,
+					value:     "tableName",
+					priority:  0,
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := NewParser()
-			got, err := parser.Parse(tt.reader)
+			parser := NewScanner()
+			got, err := parser.Scan(tt.reader)
 			assert.ErrorIs(t, err, tt.wantErr)
 			assert.Equal(t, tt.want, got)
 		})

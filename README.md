@@ -13,13 +13,43 @@ __Основные операции:__ `AND`, `OR`, `=`, `<`, `>`.
 
 __Пример запроса__: 
 ```sql
-(salary > 150200.99 AND status='working') OR (age > 18 AND age < 40);
+SELECT region, country, item_type, sales_channel, total_cost, total_profit FROM sales WHERE country = 'South Africa' AND item_type = 'Clothes' and sales_channel='Online' AND total_profit > 400000;
 ```
 
 __"Особенности":__
 1. В конце запроса в обязательном порядке должна стоять `;`
 2. Оператор `AND` имеет приоритет над оператором `OR`
 
+## Использование
+
+Загрузка csv-файла
+```
+\load file.csv config.yaml
+```
+
+Формат yaml-файла
+```yaml
+name: tablename         # Наименование таблицы
+sep: ','                # Разделитель значений
+lazyQuotes: true        # true, если значения заключены в двойные кавычки
+fields:                 # Список полей в таблице
+- name: lastname        # Наименование поля
+  type: string          # Тип поля: string или number
+- name: firstname
+  type: string
+- name: salary
+  type: number
+```
+
+Список загруженных таблиц
+```
+\list
+```
+
+Удаление таблицы
+```
+ \drop tablename
+ ```
 ## Задачи на разработку
 
 - [x] \(CSVDB-1) Реализовать простейший парсер выражения `where`
@@ -31,7 +61,8 @@ __"Особенности":__
 - [x] \(CSVDB-7) Реализовать построение плана запроса из разобранного выражения `where`
 - [x] \(CSVDB-8) Реализовать загрузку файла в RAM
 - [x] \(CSVDB-9) Реализовать конфигурирование посредством yaml-файла
-- [ ] \(CSVDB-10) Отрефакторить, чтобы не было стыдно смотреть на код
+- [x] \(CSVDB-10) Реализовать секцию `from`
+- [x] \(CSVDB-11) Реализовать секцию `select`
 
 ## Локальная настройка окружения
 
