@@ -12,14 +12,12 @@ import (
 
 func NewApp() *App {
 	return &App{
-		stmtScanner: scanner.NewScanner(),
-		tables:      make(map[string]table.Table),
+		tables: make(map[string]table.Table),
 	}
 }
 
 type App struct {
-	stmtScanner *scanner.Scanner
-	tables      map[string]table.Table
+	tables map[string]table.Table
 }
 
 func (a *App) LoadTable(t table.Table) error {
@@ -50,7 +48,8 @@ func (a *App) DropTable(tableName string) error {
 }
 
 func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
-	tokens, err := a.stmtScanner.Scan(strings.NewReader(query))
+	stmtScanner := scanner.NewScanner()
+	tokens, err := stmtScanner.Scan(strings.NewReader(query))
 	if err != nil {
 		return table.Table{}, err
 	}
