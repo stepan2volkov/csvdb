@@ -1,34 +1,34 @@
-package config
+package loader
 
 import (
 	"fmt"
-	"os"
+	"io"
 
-	"github.com/stepan2volkov/csvdb/internal/table"
+	"github.com/stepan2volkov/csvdb/internal/app/table"
 
 	"gopkg.in/yaml.v3"
 )
 
-type Field struct {
+type field struct {
 	Name string `yaml:"name"`
 	Type string `yaml:"type"`
 }
 
-type TableConfig struct {
+type tableConfig struct {
 	Name       string  `yaml:"name"`
 	Sep        string  `yaml:"sep" default:";"`
 	LazyQuotes bool    `yaml:"lazyQuotes" default:"false"`
-	Fields     []Field `yaml:"fields"`
+	Fields     []field `yaml:"fields"`
 }
 
-func (c TableConfig) GetSep() rune {
+func (c tableConfig) getSep() rune {
 	for _, r := range c.Sep {
 		return r
 	}
 	return ';'
 }
 
-func (c TableConfig) GetFields() ([]table.Field, error) {
+func (c tableConfig) getFields() ([]table.Field, error) {
 	ret := make([]table.Field, 0, len(c.Fields))
 
 	for _, f := range c.Fields {
@@ -50,20 +50,17 @@ func (c TableConfig) GetFields() ([]table.Field, error) {
 	return ret, nil
 }
 
-func LoadConfig(path string) (TableConfig, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return TableConfig{}, err
+func loadConfig(file io.Reader) (tableConfig, error) {
+	tc := tableConfig{}
+	if err := yaml.NewDecoder(file).Decode(&tc); err != nil {
+		return tableConfig{}, fmt.Errorf("error when decode config: %w", err)
 	}
-	tc := TableConfig{}
-	if err = yaml.NewDecoder(file).Decode(&tc); err != nil {
-		return TableConfig{}, err
-	}
+
 	if tc.Name == "" {
-		return TableConfig{}, fmt.Errorf("name cannot be empty")
+		return tableConfig{}, fmt.Errorf("name cannot be empty")
 	}
 	if len(tc.Sep) != 1 {
-		return TableConfig{}, fmt.Errorf("sep should be presented by only one character")
+		return tableConfig{}, fmt.Errorf("sep should be presented by only one character")
 	}
 	return tc, nil
 }

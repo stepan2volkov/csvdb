@@ -3,60 +3,63 @@ package parser
 import (
 	"fmt"
 
-	"github.com/stepan2volkov/csvdb/internal/table"
+	"github.com/stepan2volkov/csvdb/internal/app/scanner"
+	"github.com/stepan2volkov/csvdb/internal/app/table"
+	"github.com/stepan2volkov/csvdb/internal/app/table/operation"
 )
 
-func MakeFilters(tokens []Token) (table.LogicalFilter, error) {
-	var ret []table.LogicalFilter
-	tokenQueue := make([]Token, 0, len(tokens))
+func makeWhere(tokens []scanner.Token) (table.LogicalOperation, error) {
+	var ret []table.LogicalOperation
+	tokenQueue := make([]scanner.Token, 0, len(tokens))
 
 	for _, token := range tokens {
 		switch token.Type() {
-		case TokenTypeOpMore, TokenTypeOpLess, TokenTypeOpEqual:
+		case scanner.TokenTypeOpMore, scanner.TokenTypeOpLess, scanner.TokenTypeOpEqual:
 
 			val, id := tokenQueue[len(tokenQueue)-1], tokenQueue[len(tokenQueue)-2]
 			tokenQueue = tokenQueue[:len(tokenQueue)-2]
-			if id.Type() != TokenTypeID {
+			if id.Type() != scanner.TokenTypeID {
 				val, id = id, val
 			}
-			if id.Type() != TokenTypeID || (val.Type() != TokenTypeString && val.Type() != TokenTypeNumber) {
+			if id.Type() != scanner.TokenTypeID ||
+				(val.Type() != scanner.TokenTypeString && val.Type() != scanner.TokenTypeNumber) {
 				return nil, fmt.Errorf("invalid where format")
 			}
 			var op table.CompareOperationType
 
 			switch token.Type() {
-			case TokenTypeOpMore:
+			case scanner.TokenTypeOpMore:
 				op = table.CompareOperationTypeMore
-			case TokenTypeOpLess:
+			case scanner.TokenTypeOpLess:
 				op = table.CompareOperationTypeLess
-			case TokenTypeOpEqual:
+			case scanner.TokenTypeOpEqual:
 				op = table.CompareOperationTypeEqual
 			}
 
-			ret = append(ret, table.DummyFilter{
-				Filter: table.CompareFilter{
-					FieldName: id.value.(string),
-					Op:        op,
-					Val:       val.value,
+			ret = append(ret, operation.DummyValueOperation{
+				CompareOperation: table.CompareValueOperation{
+					ColumnName: id.Value().(string),
+					Type:       op,
+					Val:        val.Value(),
 				},
 			})
-		case TokenTypeOpAnd:
+		case scanner.TokenTypeOpAnd:
 			if len(ret) < 2 {
 				return nil, fmt.Errorf("invalid where format")
 			}
 			arg1, arg2 := ret[len(ret)-1], ret[len(ret)-2]
 			ret = ret[:len(ret)-2]
-			ret = append(ret, table.AndFilter{
+			ret = append(ret, operation.AndOperation{
 				Left:  arg1,
 				Right: arg2,
 			})
-		case TokenTypeOpOr:
+		case scanner.TokenTypeOpOr:
 			if len(ret) < 2 {
 				return nil, fmt.Errorf("invalid where format")
 			}
 			arg1, arg2 := ret[len(ret)-1], ret[len(ret)-2]
 			ret = ret[:len(ret)-2]
-			ret = append(ret, table.OrFilter{
+			ret = append(ret, operation.OrOperation{
 				Left:  arg1,
 				Right: arg2,
 			})

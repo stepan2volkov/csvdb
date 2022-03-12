@@ -1,4 +1,4 @@
-package parser
+package scanner
 
 import (
 	"fmt"
@@ -8,9 +8,15 @@ import (
 	"unicode"
 )
 
+const (
+	KeywordSelect = "select"
+	KeywordFrom   = "from"
+	KeywordWhere  = "where"
+)
+
 var (
 	regexpNumber  = regexp.MustCompile(`^[0-9]+(.[0-9]+)?$`)
-	regexpID      = regexp.MustCompile(`[a-zA-Z][a-zA-Z0-9_]*`)
+	regexpID      = regexp.MustCompile(`[a-zA-Z][a-zA-Z0-9_]*|\*`)
 	regexpKeyword = regexp.MustCompile(`select|from|where`)
 )
 
@@ -71,19 +77,19 @@ func (t *Tokenizer) GetTokens() []Token {
 	return t.tokens
 }
 
-func NewParser() *Parser {
-	return &Parser{
+func NewScanner() *Scanner {
+	return &Scanner{
 		buf:       strings.Builder{},
 		tokenizer: NewTokenizer(),
 	}
 }
 
-type Parser struct {
+type Scanner struct {
 	buf       strings.Builder
 	tokenizer *Tokenizer
 }
 
-func (p *Parser) Parse(reader io.RuneReader) ([]Token, error) {
+func (p *Scanner) Scan(reader io.RuneReader) ([]Token, error) {
 	for {
 		r, _, err := reader.ReadRune()
 		if err == io.EOF {
@@ -101,8 +107,17 @@ func (p *Parser) Parse(reader io.RuneReader) ([]Token, error) {
 			return p.tokenizer.GetTokens(), nil
 		}
 
+		// Парсинг строк
 		if r == '\'' {
 			if err = p.extractString(reader); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		// Парсинг наименования полей и таблиц
+		if r == '"' {
+			if err = p.extractID(reader); err != nil {
 				return nil, err
 			}
 			continue
@@ -134,7 +149,7 @@ func (p *Parser) Parse(reader io.RuneReader) ([]Token, error) {
 		}
 
 		// ==== Обработка символов ключевых слов, наименования полей и таблиц
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '.' || r == '_' {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '.' || r == '_' || r == '*' {
 			p.buf.WriteRune(unicode.ToLower(r))
 			continue
 		}
@@ -144,7 +159,7 @@ func (p *Parser) Parse(reader io.RuneReader) ([]Token, error) {
 	}
 }
 
-func (p *Parser) flushBuffer() error {
+func (p *Scanner) flushBuffer() error {
 	if p.buf.Len() > 0 {
 		if err := p.tokenizer.AddToTokens(ParseTokenType(p.buf.String())); err != nil {
 			return err
@@ -154,7 +169,7 @@ func (p *Parser) flushBuffer() error {
 	return nil
 }
 
-func (p *Parser) extractString(reader io.RuneReader) error {
+func (p *Scanner) extractString(reader io.RuneReader) error {
 	var hasPrevRuneEscape bool
 
 	for {
@@ -183,10 +198,40 @@ func (p *Parser) extractString(reader io.RuneReader) error {
 		hasPrevRuneEscape = false
 		p.buf.WriteRune(r)
 	}
-
 }
 
-func (p *Parser) handleCompareSign(r rune) error {
+func (p *Scanner) extractID(reader io.RuneReader) error {
+	var hasPrevRuneEscape bool
+
+	for {
+		r, _, err := reader.ReadRune()
+		if err == io.EOF {
+			return fmt.Errorf("keyword should be closed by")
+		}
+		if err != nil {
+			return fmt.Errorf("unexpected error: %w", err)
+		}
+
+		// Идентификатор закончен
+		if r == '"' && !hasPrevRuneEscape {
+			if p.buf.Len() > 0 {
+				if err := p.tokenizer.AddToTokens(NewToken(p.buf.String(), TokenTypeID)); err != nil {
+					return err
+				}
+				p.buf.Reset()
+			}
+			return nil
+		}
+		if r == '\\' && !hasPrevRuneEscape {
+			hasPrevRuneEscape = true
+			continue
+		}
+		hasPrevRuneEscape = false
+		p.buf.WriteRune(r)
+	}
+}
+
+func (p *Scanner) handleCompareSign(r rune) error {
 	tokenType := TokenTypeOpEqual
 	switch r {
 	case '>':
