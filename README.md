@@ -63,8 +63,17 @@ fields:                 # Список полей в таблице
 - [x] \(CSVDB-9) Реализовать конфигурирование посредством yaml-файла
 - [x] \(CSVDB-10) Реализовать секцию `from`
 - [x] \(CSVDB-11) Реализовать секцию `select`
-- [x] \(CSVDB-11) Перенести логирование в файлы `access.log`  и `error.log`
-- [x] \(CSVDB-12) Gracefull shutdown
+- [x] \(CSVDB-12) Перенести логирование в файлы `access.log`  и `error.log`
+- [x] \(CSVDB-13) Gracefull shutdown
+- [ ] \(CSVDB-14) Добавить build приложения и установку golangci-lint в Makefile
+- [ ] \(CSVDB-15) Добавить build в pre-commit hook
+- [ ] \(CSVDB-16) Избавиться от глобальных переменных
+- [ ] \(CSVDB-17) Перенести текстовые переменные в константы
+- [ ] \(CSVDB-18) Передавать логгер в явном виде
+- [ ] \(CSVDB-19) Покрыть тестами `github.com/stepan2volkov/csvdb/internal/operation/helper.go`
+- [ ] \(CSVDB-20) Обработка контекста в handlreInput(ctx) и приложении
+- [ ] \(CSVDB-21) Добавить больше логов
+- [ ] \(CSVDB-22) Рассмотреть возможности для распараллеливания
 
 ## Локальная настройка окружения
 
