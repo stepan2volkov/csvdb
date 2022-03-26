@@ -31,7 +31,7 @@ func (o AndOperation) Apply(ctx context.Context, t table.Table) ([]int, error) {
 	if len(res2) == 0 {
 		return nil, nil
 	}
-	firstMap := map[int]struct{}{}
+	firstMap := make(map[int]struct{}, len(res1))
 	for _, i := range res1 {
 		firstMap[i] = struct{}{}
 	}

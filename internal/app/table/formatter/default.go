@@ -1,6 +1,8 @@
 package formatter
 
 import (
+	"context"
+
 	prettyTable "github.com/jedib0t/go-pretty/v6/table"
 
 	"github.com/stepan2volkov/csvdb/internal/app/table"
@@ -10,7 +12,7 @@ var _ table.Formatter = &DefaultFormatter{}
 
 type DefaultFormatter struct{}
 
-func (f *DefaultFormatter) Format(t table.Table) string {
+func (f *DefaultFormatter) Format(ctx context.Context, t table.Table) (string, error) {
 	writer := prettyTable.NewWriter()
 	writer.SetStyle(prettyTable.StyleLight)
 
@@ -27,12 +29,17 @@ func (f *DefaultFormatter) Format(t table.Table) string {
 		row := prettyTable.Row{}
 
 		for columnIndex := range t.Columns {
-			row = append(row, t.Columns[columnIndex].Values[rowIndex])
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			default:
+				row = append(row, t.Columns[columnIndex].Values[rowIndex])
+			}
 		}
 		rows = append(rows, row)
 	}
 
 	writer.AppendRows(rows)
 
-	return writer.Render()
+	return writer.Render(), nil
 }

@@ -15,7 +15,7 @@ const (
 )
 
 type Formatter interface {
-	Format(t Table) string
+	Format(ctx context.Context, t Table) (string, error)
 }
 
 type CompareValueOperation struct {
@@ -77,18 +77,24 @@ func (t Table) GetColumnByName(name string) (Column, error) {
 	return t.Columns[i], nil
 }
 
-func (t Table) GetSubTableByIndexes(rowIndexes []int) Table {
+func (t Table) GetSubTableByIndexes(ctx context.Context, rowIndexes []int) (Table, error) {
 	cols := make([]Column, len(t.Columns))
 
 	for i, col := range t.Columns {
 		cols[i].Field = col.Field
 		cols[i].Values = make([]Value, 0, len(rowIndexes))
 		for _, index := range rowIndexes {
-			cols[i].Values = append(cols[i].Values, col.Values[index])
+			select {
+			case <-ctx.Done():
+				return Table{}, ctx.Err()
+			default:
+				cols[i].Values = append(cols[i].Values, col.Values[index])
+			}
+
 		}
 	}
 
-	return NewTable(t.Name, cols)
+	return NewTable(t.Name, cols), nil
 }
 
 func (t Table) GetSubTableByFields(fields []string) (Table, error) {

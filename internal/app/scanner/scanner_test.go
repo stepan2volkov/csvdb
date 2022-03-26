@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestScan(t *testing.T) {
@@ -351,9 +352,11 @@ func TestScan(t *testing.T) {
 		},
 	}
 
+	logger, _ := zap.NewDevelopment()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := NewScanner()
+			parser := NewScanner(logger)
 			got, err := parser.Scan(tt.reader)
 			assert.ErrorIs(t, err, tt.wantErr)
 			assert.Equal(t, tt.want, got)

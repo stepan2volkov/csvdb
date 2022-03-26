@@ -70,9 +70,9 @@ fields:                 # Список полей в таблице
 - [x] \(CSVDB-16) Избавиться от глобальных переменных
 - [x] \(CSVDB-17) Перенести текстовые переменные в константы
 - [x] \(CSVDB-18) Передавать логгер в явном виде
-- [ ] \(CSVDB-19) Покрыть тестами `github.com/stepan2volkov/csvdb/internal/operation/helper.go`
-- [ ] \(CSVDB-20) Обработка контекста в handleInput(ctx) и приложении
-- [ ] \(CSVDB-21) Добавить больше логов
+- [x] \(CSVDB-19) Покрыть тестами `github.com/stepan2volkov/csvdb/internal/app/table/operation/helper.go`
+- [x] \(CSVDB-20) Обработка контекста в handleInput(ctx) и приложении
+- [x] \(CSVDB-21) Добавить больше логов
 - [ ] \(CSVDB-22) Рассмотреть возможности для распараллеливания
 
 ## Локальная настройка окружения
