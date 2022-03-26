@@ -162,7 +162,6 @@ func handleInput(ctx context.Context, logger *zap.Logger, a *app.App, f table.Fo
 				zap.String("query", in),
 				zap.Error(err),
 			)
-
 			return
 		}
 		fmt.Println(output)

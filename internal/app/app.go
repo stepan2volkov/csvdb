@@ -78,7 +78,6 @@ func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
 			zap.String("tablename", stmt.Tablename),
 			zap.String("query", query),
 		)
-
 		return table.Table{}, fmt.Errorf("table '%s' doesn't exist", stmt.Tablename)
 	}
 
@@ -89,7 +88,6 @@ func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
 			zap.String("query", query),
 			zap.Error(err),
 		)
-
 		return table.Table{}, err
 	}
 
@@ -110,7 +108,6 @@ func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
 			zap.String("query", query),
 			zap.Error(err),
 		)
-
 		return table.Table{}, err
 	}
 	a.logger.Debug(
