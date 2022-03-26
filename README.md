@@ -65,9 +65,9 @@ fields:                 # Список полей в таблице
 - [x] \(CSVDB-11) Реализовать секцию `select`
 - [x] \(CSVDB-12) Перенести логирование в файлы `access.log`  и `error.log`
 - [x] \(CSVDB-13) Gracefull shutdown
-- [ ] \(CSVDB-14) Добавить build приложения и установку golangci-lint в Makefile
-- [ ] \(CSVDB-15) Добавить build в pre-commit hook
-- [ ] \(CSVDB-16) Избавиться от глобальных переменных
+- [x] \(CSVDB-14) Добавить build приложения и установку golangci-lint в Makefile
+- [x] \(CSVDB-15) Добавить build в pre-commit hook
+- [x] \(CSVDB-16) Избавиться от глобальных переменных
 - [ ] \(CSVDB-17) Перенести текстовые переменные в константы
 - [x] \(CSVDB-18) Передавать логгер в явном виде
 - [ ] \(CSVDB-19) Покрыть тестами `github.com/stepan2volkov/csvdb/internal/operation/helper.go`

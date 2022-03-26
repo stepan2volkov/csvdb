@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/stepan2volkov/csvdb/internal/app/parser"
 	"github.com/stepan2volkov/csvdb/internal/app/scanner"
 	"github.com/stepan2volkov/csvdb/internal/app/table"
-	"go.uber.org/zap"
 )
 
 func NewApp(logger *zap.Logger) *App {

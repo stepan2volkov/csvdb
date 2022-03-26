@@ -10,11 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/stepan2volkov/csvdb/internal/app"
 	"github.com/stepan2volkov/csvdb/internal/app/table/formatter"
 	"github.com/stepan2volkov/csvdb/internal/app/table/loader"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
@@ -135,6 +136,7 @@ func handleInput(ctx context.Context, logger *zap.Logger, in string) {
 }
 
 func main() {
+	fmt.Printf("Welcome to csvdb.\nCommit: %s, Build Time: %s\n\n", app.BuildCommit, app.BuildTime)
 	log := getLogger()
 
 	log.Info("starting csv-db")
@@ -151,7 +153,7 @@ func main() {
 		fmt.Print("~# ")
 		select {
 		case <-ctx.Done():
-			fmt.Println("Bye-bye!")
+			fmt.Println("\nBye-bye!")
 			log.Info("staring gracefull shutdown")
 			return
 		case in := <-reader:
