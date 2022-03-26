@@ -70,5 +70,6 @@ func makeWhere(tokens []scanner.Token) (table.LogicalOperation, error) {
 	if len(ret) != 1 {
 		return nil, fmt.Errorf("invalid where format")
 	}
+
 	return ret[0], nil
 }

@@ -32,6 +32,7 @@ func (a *App) LoadTable(t table.Table) error {
 		return fmt.Errorf("table '%s' has already exist", t.Name)
 	}
 	a.tables[t.Name] = t
+
 	return nil
 }
 
@@ -40,6 +41,7 @@ func (a *App) TableList() []string {
 	for tableName := range a.tables {
 		ret = append(ret, tableName)
 	}
+
 	return ret
 }
 
@@ -48,6 +50,7 @@ func (a *App) DropTable(tableName string) error {
 		return fmt.Errorf("table '%s' doesn't exist", tableName)
 	}
 	delete(a.tables, tableName)
+
 	return nil
 }
 

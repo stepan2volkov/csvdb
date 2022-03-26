@@ -41,7 +41,7 @@ type Field struct {
 }
 
 type Value interface {
-	String() string
+	fmt.Stringer
 	Compare(val interface{}, op CompareOperationType) (bool, error)
 }
 
@@ -74,6 +74,7 @@ func (t Table) GetColumnByName(name string) (Column, error) {
 	if !found {
 		return Column{}, fmt.Errorf("column '%s' not found", name)
 	}
+
 	return t.Columns[i], nil
 }
 
@@ -115,9 +116,12 @@ func (t Table) GetSubTableByFields(fields []string) (Table, error) {
 		notFoundField := ""
 		for k := range fieldMap {
 			notFoundField = k
+
 			break
 		}
+
 		return Table{}, fmt.Errorf("fields %s not found", notFoundField)
 	}
+
 	return NewTable(t.Name, cols), nil
 }

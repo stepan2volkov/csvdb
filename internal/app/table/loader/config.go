@@ -25,6 +25,7 @@ func (c tableConfig) getSep() rune {
 	for _, r := range c.Sep {
 		return r
 	}
+
 	return ';'
 }
 
@@ -62,5 +63,6 @@ func loadConfig(file io.Reader) (tableConfig, error) {
 	if len(tc.Sep) != 1 {
 		return tableConfig{}, fmt.Errorf("sep should be presented by only one character")
 	}
+
 	return tc, nil
 }

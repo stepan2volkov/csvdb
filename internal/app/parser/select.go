@@ -28,6 +28,7 @@ func MakeSelectStmt(tokens []scanner.Token) (SelectStmt, error) {
 			return SelectStmt{}, err
 		}
 	}
+
 	return builder.build()
 }
 
@@ -85,6 +86,7 @@ func (b *selectStmtBuilder) append(token scanner.Token) error {
 			}
 		}
 		b.lastKeyword = value
+
 		return nil
 	}
 	if token.Type() == scanner.TokenTypeID {
@@ -96,6 +98,7 @@ func (b *selectStmtBuilder) append(token scanner.Token) error {
 			value := token.Value().(string)
 			if value == "*" {
 				b.allFields = true
+
 				return nil
 			}
 			b.fields = append(b.fields, value)
@@ -109,11 +112,13 @@ func (b *selectStmtBuilder) append(token scanner.Token) error {
 		default:
 			return fmt.Errorf("select should be the first word")
 		}
+
 		return nil
 	}
 	if b.lastKeyword != KeywordWhere {
 		return fmt.Errorf("invalid format of select stmt")
 	}
 	b.conditions = append(b.conditions, token)
+
 	return nil
 }

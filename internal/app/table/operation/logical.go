@@ -85,6 +85,7 @@ func (o DummyValueOperation) Apply(ctx context.Context, t table.Table) ([]int, e
 		for i := range t.Columns[0].Values {
 			ret = append(ret, i)
 		}
+
 		return ret, nil
 	}
 
@@ -102,5 +103,6 @@ func (o DummyValueOperation) Apply(ctx context.Context, t table.Table) ([]int, e
 			ret = append(ret, i)
 		}
 	}
+
 	return ret, nil
 }

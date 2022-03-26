@@ -17,6 +17,14 @@ linters:
   - errcheck
   - deadcode
   - exportloopref
+  - gochecknoglobals
+  - gosec
+  - ifshort
+  - makezero
+  - nilerr
+  - nolintlint
+  - prealloc
+  - predeclared
 
 linters-settings:
   goimports:
