@@ -8,16 +8,19 @@ import (
 	"github.com/stepan2volkov/csvdb/internal/app/parser"
 	"github.com/stepan2volkov/csvdb/internal/app/scanner"
 	"github.com/stepan2volkov/csvdb/internal/app/table"
+	"go.uber.org/zap"
 )
 
-func NewApp() *App {
+func NewApp(logger *zap.Logger) *App {
 	return &App{
+		logger: logger,
 		tables: make(map[string]table.Table),
 	}
 }
 
 type App struct {
 	tables map[string]table.Table
+	logger *zap.Logger
 }
 
 func (a *App) LoadTable(t table.Table) error {
