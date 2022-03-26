@@ -50,6 +50,65 @@ fields:                 # Список полей в таблице
 ```
  \drop tablename
  ```
+
+## Структура проекта
+
+Направления зависимостей между пакетами приведены ниже.
+```mermaid
+flowchart LR;
+  subgraph app
+    App
+  end
+  subgraph parser
+    SelectStmt
+  end
+  subgraph scanner
+    Token
+    TokenType
+    Scanner
+  end
+  subgraph table
+    LogicalOperation
+    CompareValueOperation
+    Value
+    Table
+    Formatter
+
+    subgraph operation
+      DummyValueOperation
+      OrOperation
+      AndOperation
+    end
+    
+    subgraph value
+      NumberValue
+      StringValue
+    end
+    
+    subgraph formatter
+      DefaultFormatter
+    end
+  end
+
+  SelectStmt-->LogicalOperation
+  SelectStmt-->Token
+  SelectStmt-->CompareValueOperation
+  SelectStmt-->TokenType
+  DummyValueOperation-. implements .->LogicalOperation
+  OrOperation-. implements .->LogicalOperation
+  AndOperation-. implements .->LogicalOperation
+
+  NumberValue-. implements .->Value
+  StringValue-. implements .->Value
+
+  Table-- Contains -->Value
+  DefaultFormatter-. implements .->Formatter
+
+  App-- use-->Table
+  App-- use-->Scanner
+  App-- use-->SelectStmt
+  App-- use-->LogicalOperation
+```
 ## Задачи на разработку
 
 - [x] \(CSVDB-1) Реализовать простейший парсер выражения `where`
