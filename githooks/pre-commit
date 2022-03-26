@@ -6,4 +6,12 @@
 #
 # To enable this hook, rename this file to "pre-commit".
 
-make test && make check
+echo '\n==========Testing================='
+make test
+echo '\n==========Linter=================='
+make check
+echo '\n==========Build==================='
+make build
+echo '\n==========Cleaning build=========='
+make clean
+echo '\n==========Finished================\n'
