@@ -10,17 +10,32 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
 	"github.com/stepan2volkov/csvdb/internal/app"
+	"github.com/stepan2volkov/csvdb/internal/app/table"
 	"github.com/stepan2volkov/csvdb/internal/app/table/formatter"
 	"github.com/stepan2volkov/csvdb/internal/app/table/loader"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+const (
+	cmdLoadTable  = `\load`
+	cmdTableList  = `\list`
+	cmdDroupTable = `\drop`
+	cmdHelp       = `\help`
+	welcomeQuery  = "~# "
 )
 
 var (
-	a *app.App
-	f formatter.DefaultFormatter
+	helpList = []struct {
+		cmd  string
+		desc string
+	}{
+		{cmd: cmdHelp, desc: "Show the help"},
+		{cmd: cmdTableList, desc: "Show available loaded tables"},
+		{cmd: cmdLoadTable, desc: fmt.Sprintf("Load the table. Format: '%s <csv-path> <yaml-description-path>'", cmdLoadTable)},
+		{cmd: cmdDroupTable, desc: fmt.Sprintf("Drop the table. Format: '%s <tablename>'", cmdDroupTable)},
+	}
 )
 
 func getLogger() *zap.Logger {
@@ -84,15 +99,15 @@ func readStdOut() <-chan string {
 
 }
 
-func handleInput(ctx context.Context, logger *zap.Logger, in string) {
+func handleInput(ctx context.Context, logger *zap.Logger, a *app.App, f table.Formatter, in string) {
 	switch {
 	case in == `\q`:
 		return
-	case strings.HasPrefix(in, `\load`):
-		in = strings.TrimSpace(strings.TrimPrefix(in, `\load`))
+	case strings.HasPrefix(in, cmdLoadTable):
+		in = strings.TrimSpace(strings.TrimPrefix(in, cmdLoadTable))
 		args := strings.Split(in, " ")
 		if len(args) != 2 {
-			fmt.Printf("wrong syntax for \\load: '%s'\n", in)
+			fmt.Printf("wrong syntax for %s: '%s'\n", cmdLoadTable, in)
 		}
 		t, err := loader.LoadFromCSV(args[0], args[1])
 		if err != nil {
@@ -103,13 +118,17 @@ func handleInput(ctx context.Context, logger *zap.Logger, in string) {
 			logger.Error("error when loading table",
 				zap.Error(err))
 		}
-	case in == `\list`:
+	case in == cmdTableList:
 		fmt.Println(strings.Join(a.TableList(), "\n"))
-	case in == `\help`:
-	case strings.HasPrefix(in, `\drop`):
+	case in == cmdHelp:
+		fmt.Println("Available command description:")
+		for _, helpItem := range helpList {
+			fmt.Printf("\t%s\t - %s\n", helpItem.cmd, helpItem.desc)
+		}
+	case strings.HasPrefix(in, cmdDroupTable):
 		newTableName := strings.TrimSpace(strings.TrimPrefix(in, `\drop`))
 		if newTableName == "" {
-			fmt.Printf("wrong syntax for \\drop: '%s'\n", in)
+			fmt.Printf("wrong syntax for %s: '%s'\n", cmdDroupTable, in)
 		}
 		if err := a.DropTable(newTableName); err != nil {
 			fmt.Printf("error when dropping table: '%v'\n", err)
@@ -136,12 +155,11 @@ func handleInput(ctx context.Context, logger *zap.Logger, in string) {
 }
 
 func main() {
-	fmt.Printf("Welcome to csvdb.\nCommit: %s, Build Time: %s\n\n", app.BuildCommit, app.BuildTime)
 	log := getLogger()
 
 	log.Info("starting csv-db")
-	a = app.NewApp(log)
-	f = formatter.DefaultFormatter{}
+	a := app.NewApp(log)
+	f := &formatter.DefaultFormatter{}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
 	defer cancel()
@@ -150,17 +168,17 @@ func main() {
 
 	log.Info("csv-db has been ready to accept queries")
 	for {
-		fmt.Print("~# ")
+		fmt.Print(welcomeQuery)
 		select {
 		case <-ctx.Done():
-			fmt.Println("\nBye-bye!")
+			fmt.Println("Bye-bye!")
 			log.Info("staring gracefull shutdown")
 			return
 		case in := <-reader:
 			if in == "" {
 				continue
 			}
-			handleInput(ctx, log, in)
+			handleInput(ctx, log, a, f, in)
 		}
 	}
 }

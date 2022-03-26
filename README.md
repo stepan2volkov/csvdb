@@ -68,7 +68,7 @@ fields:                 # Список полей в таблице
 - [x] \(CSVDB-14) Добавить build приложения и установку golangci-lint в Makefile
 - [x] \(CSVDB-15) Добавить build в pre-commit hook
 - [x] \(CSVDB-16) Избавиться от глобальных переменных
-- [ ] \(CSVDB-17) Перенести текстовые переменные в константы
+- [x] \(CSVDB-17) Перенести текстовые переменные в константы
 - [x] \(CSVDB-18) Передавать логгер в явном виде
 - [ ] \(CSVDB-19) Покрыть тестами `github.com/stepan2volkov/csvdb/internal/operation/helper.go`
 - [ ] \(CSVDB-20) Обработка контекста в handleInput(ctx) и приложении
