@@ -10,17 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-
 	"github.com/stepan2volkov/csvdb/internal/app"
+	"github.com/stepan2volkov/csvdb/internal/app/table"
 	"github.com/stepan2volkov/csvdb/internal/app/table/formatter"
 	"github.com/stepan2volkov/csvdb/internal/app/table/loader"
-)
-
-var (
-	a *app.App
-	f formatter.DefaultFormatter
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func getLogger() *zap.Logger {
@@ -84,7 +79,7 @@ func readStdOut() <-chan string {
 
 }
 
-func handleInput(ctx context.Context, logger *zap.Logger, in string) {
+func handleInput(ctx context.Context, logger *zap.Logger, a *app.App, f table.Formatter, in string) {
 	switch {
 	case in == `\q`:
 		return
@@ -136,12 +131,11 @@ func handleInput(ctx context.Context, logger *zap.Logger, in string) {
 }
 
 func main() {
-	fmt.Printf("Welcome to csvdb.\nCommit: %s, Build Time: %s\n\n", app.BuildCommit, app.BuildTime)
 	log := getLogger()
 
 	log.Info("starting csv-db")
-	a = app.NewApp(log)
-	f = formatter.DefaultFormatter{}
+	a := app.NewApp(log)
+	f := &formatter.DefaultFormatter{}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
 	defer cancel()
@@ -153,14 +147,14 @@ func main() {
 		fmt.Print("~# ")
 		select {
 		case <-ctx.Done():
-			fmt.Println("\nBye-bye!")
+			fmt.Println("Bye-bye!")
 			log.Info("staring gracefull shutdown")
 			return
 		case in := <-reader:
 			if in == "" {
 				continue
 			}
-			handleInput(ctx, log, in)
+			handleInput(ctx, log, a, f, in)
 		}
 	}
 }
