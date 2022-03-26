@@ -13,15 +13,58 @@ import (
 	"github.com/stepan2volkov/csvdb/internal/app"
 	"github.com/stepan2volkov/csvdb/internal/app/table/formatter"
 	"github.com/stepan2volkov/csvdb/internal/app/table/loader"
-	"github.com/stepan2volkov/csvdb/internal/logger"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var (
-	a   *app.App
-	f   formatter.DefaultFormatter
-	log *zap.Logger
+	a *app.App
+	f formatter.DefaultFormatter
 )
+
+func getLogger() *zap.Logger {
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
+	})
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel
+	})
+	accessEncoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		MessageKey:  "message",
+		LevelKey:    "level",
+		TimeKey:     "timestamp",
+		EncodeLevel: zapcore.LowercaseLevelEncoder,
+		EncodeTime:  zapcore.ISO8601TimeEncoder,
+	})
+	errorEncoder := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		MessageKey:  "message",
+		LevelKey:    "level",
+		TimeKey:     "timestamp",
+		EncodeLevel: zapcore.LowercaseLevelEncoder,
+		EncodeTime:  zapcore.ISO8601TimeEncoder,
+	})
+
+	errorFile, err := os.OpenFile("error.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		msg := fmt.Sprintf("error when createing error.log file: %v", err)
+		panic(msg)
+	}
+	errorSync := zapcore.AddSync(errorFile)
+
+	accessFile, err := os.OpenFile("access.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		msg := fmt.Sprintf("error when createing access.log file: %v", err)
+		panic(msg)
+	}
+	accessSync := zapcore.AddSync(accessFile)
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(accessEncoder, accessSync, lowPriority),
+		zapcore.NewCore(errorEncoder, errorSync, highPriority),
+	)
+
+	return zap.New(core)
+}
 
 func readStdOut() <-chan string {
 	ret := make(chan string, 1)
@@ -40,7 +83,7 @@ func readStdOut() <-chan string {
 
 }
 
-func handleInput(ctx context.Context, in string) {
+func handleInput(ctx context.Context, logger *zap.Logger, in string) {
 	switch {
 	case in == `\q`:
 		return
@@ -56,7 +99,7 @@ func handleInput(ctx context.Context, in string) {
 		}
 		if err = a.LoadTable(t); err != nil {
 			fmt.Printf("error when loading table: %v\n", err)
-			log.Error("error when loading table",
+			logger.Error("error when loading table",
 				zap.Error(err))
 		}
 	case in == `\list`:
@@ -69,7 +112,7 @@ func handleInput(ctx context.Context, in string) {
 		}
 		if err := a.DropTable(newTableName); err != nil {
 			fmt.Printf("error when dropping table: '%v'\n", err)
-			log.Error("error when dropping table",
+			logger.Error("error when dropping table",
 				zap.Error(err))
 		}
 	default:
@@ -77,14 +120,14 @@ func handleInput(ctx context.Context, in string) {
 		res, err := a.Execute(ctx, in)
 		if err != nil {
 			fmt.Printf("error: %v\n", err)
-			log.Error("error executing query",
+			logger.Error("error executing query",
 				zap.String("query", in),
 				zap.Error(err))
 			return
 		}
 		duration := time.Since(start)
 		fmt.Println(f.Format(res))
-		log.Info("query has been executed",
+		logger.Info("query has been executed",
 			zap.String("query", in),
 			zap.String("table", res.Name),
 			zap.Duration("duration", duration))
@@ -92,10 +135,10 @@ func handleInput(ctx context.Context, in string) {
 }
 
 func main() {
-	log = logger.GetLogger()
+	log := getLogger()
 
 	log.Info("starting csv-db")
-	a = app.NewApp()
+	a = app.NewApp(log)
 	f = formatter.DefaultFormatter{}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
@@ -115,7 +158,7 @@ func main() {
 			if in == "" {
 				continue
 			}
-			handleInput(ctx, in)
+			handleInput(ctx, log, in)
 		}
 	}
 }
