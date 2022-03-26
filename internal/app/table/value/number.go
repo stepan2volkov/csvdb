@@ -14,6 +14,7 @@ func NewNumberValue(val string) (NumberValue, error) {
 	if err != nil {
 		return NumberValue{}, err
 	}
+
 	return NumberValue{value: num}, nil
 }
 

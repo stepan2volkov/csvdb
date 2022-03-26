@@ -26,12 +26,9 @@ func (v StringValue) Compare(val interface{}, op table.CompareOperationType) (bo
 		return false, fmt.Errorf("invalid value for string: '%v'", val)
 	}
 
-	switch op {
-	case table.CompareOperationTypeLess, table.CompareOperationTypeMore:
-		return false, fmt.Errorf("invalid operation for type string: %s", op)
-	case table.CompareOperationTypeEqual:
+	if op == table.CompareOperationTypeEqual {
 		return v.value == compareValue, nil
 	}
 
-	return false, fmt.Errorf("unknown operation for type string: %s", op)
+	return false, fmt.Errorf("invalid operation for type string: %s", op)
 }

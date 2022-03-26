@@ -28,6 +28,7 @@ const (
 )
 
 var (
+	//nolint
 	helpList = []struct {
 		cmd  string
 		desc string
@@ -151,6 +152,7 @@ func handleInput(ctx context.Context, logger *zap.Logger, a *app.App, f table.Fo
 			logger.Error("error executing query",
 				zap.String("query", in),
 				zap.Error(err))
+
 			return
 		}
 		duration := time.Since(start)
@@ -160,6 +162,7 @@ func handleInput(ctx context.Context, logger *zap.Logger, a *app.App, f table.Fo
 				zap.String("query", in),
 				zap.Error(err),
 			)
+
 			return
 		}
 		fmt.Println(output)

@@ -32,6 +32,7 @@ func (a *App) LoadTable(t table.Table) error {
 		return fmt.Errorf("table '%s' has already exist", t.Name)
 	}
 	a.tables[t.Name] = t
+
 	return nil
 }
 
@@ -40,6 +41,7 @@ func (a *App) TableList() []string {
 	for tableName := range a.tables {
 		ret = append(ret, tableName)
 	}
+
 	return ret
 }
 
@@ -48,6 +50,7 @@ func (a *App) DropTable(tableName string) error {
 		return fmt.Errorf("table '%s' doesn't exist", tableName)
 	}
 	delete(a.tables, tableName)
+
 	return nil
 }
 
@@ -75,6 +78,7 @@ func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
 			zap.String("tablename", stmt.Tablename),
 			zap.String("query", query),
 		)
+
 		return table.Table{}, fmt.Errorf("table '%s' doesn't exist", stmt.Tablename)
 	}
 
@@ -85,6 +89,7 @@ func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
 			zap.String("query", query),
 			zap.Error(err),
 		)
+
 		return table.Table{}, err
 	}
 
@@ -105,6 +110,7 @@ func (a *App) Execute(ctx context.Context, query string) (table.Table, error) {
 			zap.String("query", query),
 			zap.Error(err),
 		)
+
 		return table.Table{}, err
 	}
 	a.logger.Debug(

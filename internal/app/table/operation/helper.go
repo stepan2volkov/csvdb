@@ -16,16 +16,19 @@ func mergeIndexes(first []int, second []int) []int {
 		// Игнорируем дубликаты
 		if first[i] == lastValue {
 			i++
+
 			continue
 		}
 		if second[j] == lastValue {
 			j++
+
 			continue
 		}
 		if first[i] < second[j] {
 			ret = append(ret, first[i])
 			lastValue = first[i]
 			i++
+
 			continue
 		}
 		ret = append(ret, second[j])

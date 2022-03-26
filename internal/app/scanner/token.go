@@ -55,6 +55,7 @@ func ParseTokenType(value string) Token {
 	if matched := regexpNumber.MatchString(value); matched {
 		// можно игнорировать ошибку, поскольку значение проверено регулярным выражением
 		val, _ := strconv.ParseFloat(value, 64)
+
 		return NewToken(val, TokenTypeNumber)
 	}
 	if matched := regexpKeyword.MatchString(value); matched {
