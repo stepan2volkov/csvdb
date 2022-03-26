@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -77,16 +79,18 @@ func (t *Tokenizer) GetTokens() []Token {
 	return t.tokens
 }
 
-func NewScanner() *Scanner {
+func NewScanner(logger *zap.Logger) *Scanner {
 	return &Scanner{
 		buf:       strings.Builder{},
 		tokenizer: NewTokenizer(),
+		logger:    logger,
 	}
 }
 
 type Scanner struct {
 	buf       strings.Builder
 	tokenizer *Tokenizer
+	logger    *zap.Logger
 }
 
 func (p *Scanner) Scan(reader io.RuneReader) ([]Token, error) {

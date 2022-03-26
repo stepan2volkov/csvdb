@@ -8,6 +8,7 @@ import (
 	"github.com/stepan2volkov/csvdb/internal/app/table"
 	"github.com/stepan2volkov/csvdb/internal/app/table/operation"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestMakeWhere(t *testing.T) {
@@ -78,9 +79,12 @@ func TestMakeWhere(t *testing.T) {
 			},
 		},
 	}
+
+	logger, _ := zap.NewDevelopment()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tokens, err := scanner.NewScanner().Scan(strings.NewReader(tt.stmt))
+			tokens, err := scanner.NewScanner(logger).Scan(strings.NewReader(tt.stmt))
 			assert.ErrorIs(t, err, nil)
 			got, err := makeWhere(tokens)
 			assert.ErrorIs(t, err, tt.wantErr)
