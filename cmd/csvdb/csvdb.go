@@ -10,12 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/stepan2volkov/csvdb/internal/app"
 	"github.com/stepan2volkov/csvdb/internal/app/table"
 	"github.com/stepan2volkov/csvdb/internal/app/table/formatter"
 	"github.com/stepan2volkov/csvdb/internal/app/table/loader"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -82,17 +83,24 @@ func getLogger() *zap.Logger {
 	return zap.New(core)
 }
 
-func readStdOut() <-chan string {
+func readStdOut(ctx context.Context) <-chan string {
 	ret := make(chan string, 1)
 	scanner := bufio.NewScanner(os.Stdin)
 
 	go func() {
 		for {
-			openedBuffer := scanner.Scan()
-			if !openedBuffer {
+			select {
+			case <-ctx.Done():
+				close(ret)
 				return
+			default:
+				openedBuffer := scanner.Scan()
+				if !openedBuffer {
+					close(ret)
+					return
+				}
+				ret <- scanner.Text()
 			}
-			ret <- scanner.Text()
 		}
 	}()
 	return ret
@@ -146,7 +154,15 @@ func handleInput(ctx context.Context, logger *zap.Logger, a *app.App, f table.Fo
 			return
 		}
 		duration := time.Since(start)
-		fmt.Println(f.Format(res))
+		output, err := f.Format(ctx, res)
+		if err != nil {
+			logger.Error("error when formatting results",
+				zap.String("query", in),
+				zap.Error(err),
+			)
+			return
+		}
+		fmt.Println(output)
 		logger.Info("query has been executed",
 			zap.String("query", in),
 			zap.String("table", res.Name),
@@ -164,7 +180,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT)
 	defer cancel()
 
-	reader := readStdOut()
+	reader := readStdOut(ctx)
 
 	log.Info("csv-db has been ready to accept queries")
 	for {

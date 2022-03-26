@@ -2,13 +2,8 @@ package operation
 
 // mergeIndexes объединяет два слайса, сохраняя их порядок и исключая дубликаты
 func mergeIndexes(first []int, second []int) []int {
-	var ret []int
 
-	if len(first) > len(second) {
-		ret = make([]int, 0, len(first))
-	} else {
-		ret = make([]int, 0, len(second))
-	}
+	ret := make([]int, 0, len(first)+len(second))
 
 	i, j := 0, 0
 	lastValue := -1
