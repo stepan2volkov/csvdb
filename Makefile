@@ -9,7 +9,7 @@ check:
 	./bin/golangci-lint run -c golangci-lint.yaml
 
 test:
-	go test ./...
+	go test -cover ./...
 
 run:
 	go run $(ENTRYPOINT)/csvdb.go

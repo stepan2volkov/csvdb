@@ -185,6 +185,7 @@ func main() {
 	reader := readStdOut(ctx)
 
 	log.Info("csv-db has been ready to accept queries")
+
 	for {
 		fmt.Print(welcomeQuery)
 		select {
