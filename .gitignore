@@ -3,4 +3,5 @@ build
 .vscode
 *.csv
 *.yaml
+!.pre-commit-config.yaml
 *.log
