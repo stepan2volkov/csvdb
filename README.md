@@ -11,7 +11,7 @@ __Цель программы__:  использовать sql-like синтак
 
 __Основные операции:__ `AND`, `OR`, `=`, `<`, `>`.
 
-__Пример запроса__: 
+__Пример запроса__:
 ```sql
 SELECT region, country, item_type, sales_channel, total_cost, total_profit FROM sales WHERE country = 'South Africa' AND item_type = 'Clothes' and sales_channel='Online' AND total_profit > 400000;
 ```
@@ -79,12 +79,12 @@ flowchart LR;
       OrOperation
       AndOperation
     end
-    
+
     subgraph value
       NumberValue
       StringValue
     end
-    
+
     subgraph formatter
       DefaultFormatter
     end
@@ -137,8 +137,11 @@ flowchart LR;
 ## Локальная настройка окружения
 
 После скачивания репозитория требуется подключить pre-commit хук, чтобы выявлять проблемы до заливки кода к репозиторий.
-Требуется выполнить:
+Для этого требуется устновить фреймворк для управления хуками. Инструкцию по устновке можно найти [здесь](https://pre-commit.com/#installation).
+
+После этого потребуется один раз выполнить:
+```bash
+pre-commit install
 ```
-chmod +x githooks/pre-commit
-cp githooks/pre-commit .git/hooks
-```
+
+После этого хук будет срабатывать автоматически.
